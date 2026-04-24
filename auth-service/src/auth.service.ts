@@ -95,8 +95,15 @@ export class AuthService {
     });
   }
 
-  async logout(userId: string) {
-    await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
+  async logout(data: RefreshTokenDto) {
+    const { refreshToken } = data;
+    // 1. Verify the refresh token signature & expiry
+    const payload = await this.helperService.verifyRefreshToken(refreshToken);
+    if (!payload) {
+      throw new MicroserviceException('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+    }
+
+    await this.userModel.findByIdAndUpdate(payload.userId, { refreshToken: null });
     return ResponseHelper.success('Logged out successfully', {});
   }
 }

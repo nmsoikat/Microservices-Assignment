@@ -24,4 +24,9 @@ export class AuthController {
     refreshToken(@Body() dto: any) {
         return this.authClient.send(AUTH_PATTERNS.REFRESH_TOKEN, dto);
     }
+
+    @Post('logout')
+    logout(@Body() dto: any) {
+        return this.authClient.send(AUTH_PATTERNS.LOGOUT, dto);
+    }
 }

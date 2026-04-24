@@ -26,8 +26,8 @@ export class AuthController {
   }
 
   @MessagePattern(AUTH_PATTERNS.LOGOUT)
-  logout(@Payload() data: { userId: string }) {
-    return this.authService.logout(data.userId);
+  logout(@Payload() data: RefreshTokenDto) {
+    return this.authService.logout(data);
   }
 }
 

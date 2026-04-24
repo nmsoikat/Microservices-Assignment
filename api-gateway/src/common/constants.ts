@@ -8,6 +8,7 @@ export const AUTH_PATTERNS = {
     REGISTER: 'auth.register',
     LOGIN: 'auth.login',
     REFRESH_TOKEN: 'auth.refresh_token',
+    LOGOUT: 'auth.logout',
 };
 
 export const PRODUCT_PATTERNS = {

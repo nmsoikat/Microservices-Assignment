@@ -1,4 +1,3 @@
-import { SchemaFactory } from '@nestjs/mongoose';
 import { prop, modelOptions, buildSchema } from '@typegoose/typegoose';
 
 @modelOptions({
@@ -22,8 +21,10 @@ export class User {
 
     @prop({ default: null })
     refreshToken!: string | null;
+
+    @prop({ default: 'user' })
+    role!: string;
 }
 
 
-// export const UserSchema = SchemaFactory.createForClass(User);
 export const UserSchema = buildSchema(User);

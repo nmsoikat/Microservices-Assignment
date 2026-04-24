@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product } from './models/product.model';
 import { MicroserviceException } from './common/exceptions/microservice.exception';
+import { ResponseHelper } from './common/responses/response.helper';
 
 @Injectable()
 export class ProductService {
@@ -18,11 +19,12 @@ export class ProductService {
 
     const newProduct = await this.productModel.create(product);
 
-    return newProduct;
+    return ResponseHelper.success('Product created successfully', newProduct);
   }
 
   async findAll() {
-    return this.productModel.find();
+    const products = await this.productModel.find();
+    return ResponseHelper.success('Products found successfully', products);
   }
 
   async findOne(id: string) {
@@ -32,42 +34,34 @@ export class ProductService {
       throw new MicroserviceException('Product not found');
     }
 
-    return product;
+    return ResponseHelper.success('Product found successfully', product);
   }
 
   async update(data: any) {
-    const { id, userId, ...rest } = data;
+    const { id, ...rest } = data;
     const product = await this.productModel.findById(id);
 
     if (!product) {
       throw new MicroserviceException('Product not found');
-    }
-
-    if (product.createdBy.toString() !== userId) {
-      throw new MicroserviceException('Unauthorized: not product owner');
     }
 
     Object.assign(product, rest);
 
     await product.save();
 
-    return product;
+    return ResponseHelper.success('Product updated successfully', product);
   }
 
   async delete(data: any) {
-    const { id, userId } = data;
+    const { id } = data;
     const product = await this.productModel.findById(id);
 
     if (!product) {
       throw new MicroserviceException('Product not found');
     }
 
-    if (product.createdBy.toString() !== userId) {
-      throw new MicroserviceException('Unauthorized: not product owner');
-    }
-
     await product.deleteOne();
 
-    return { deleted: true };
+    return ResponseHelper.success('Product deleted successfully', {});
   }
 }
