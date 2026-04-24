@@ -7,6 +7,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { HelperService } from './utils/helper.service';
+import { MicroserviceException } from './common/exceptions/microservice.exception';
+import { ResponseHelper } from './common/responses/response.helper';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +20,7 @@ export class AuthService {
   async register(data: RegisterDto) {
     const existing = await this.userModel.findOne({ email: data.email });
     if (existing) {
-      return { success: false, message: 'Email already in use' };
+      throw new MicroserviceException('Email already in use');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -28,57 +30,53 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return {
-      success: true,
-      message: 'User registered successfully',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      },
-    };
+    return ResponseHelper.success('User registered successfully', {
+      id: user._id,
+      name: user.name,
+      email: user.email
+    });
   }
 
   async login(data: LoginDto) {
     const user = await this.userModel.findOne({ email: data.email });
-    if (!user) return { success: false, message: 'Invalid email or password' };
-    if (!user.isActive) return { success: false, message: 'Account is inactive' };
+    if (!user) throw new MicroserviceException('Invalid email or password');
+    if (!user.isActive) throw new MicroserviceException('Account is inactive');
 
     const isMatch = await bcrypt.compare(data.password, user.password);
-    if (!isMatch) return { success: false, message: 'Invalid email or password' };
+    if (!isMatch) throw new MicroserviceException('Invalid email or password');
 
     const tokens = await this.helperService.generateTokens(
       String(user._id), user.email, user.name,
     );
     await this.helperService.storeHashedRefreshToken(String(user._id), tokens.refresh_token);
 
-    return {
-      success: true,
+    return ResponseHelper.success('User logged in successfully', {
       ...tokens,
       user: {
         id: user._id,
         name: user.name,
         email: user.email
       },
-    };
+    });
   }
 
   async refreshToken(data: RefreshTokenDto) {
+    const { refreshToken } = data;
     // 1. Verify the refresh token signature & expiry
-    const isValid = await this.helperService.verifyRefreshToken(data.refreshToken);
-    if (!isValid) {
-      return { success: false, message: 'Invalid or expired refresh token' };
+    const payload = await this.helperService.verifyRefreshToken(refreshToken);
+    if (!payload) {
+      throw new MicroserviceException('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
     }
 
     // 2. Find user and compare stored hashed refresh token
-    const user = await this.userModel.findById(data.userId);
+    const user = await this.userModel.findById(payload.userId);
     if (!user || !user.refreshToken || !user.isActive) {
-      return { success: false, message: 'Access denied' };
+      throw new MicroserviceException('Access denied', 'ACCESS_DENIED');
     }
 
-    const tokenMatches = await bcrypt.compare(data.refreshToken, user.refreshToken);
+    const tokenMatches = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!tokenMatches) {
-      return { success: false, message: 'Refresh token is invalid' };
+      throw new MicroserviceException('Refresh token is invalid', 'INVALID_REFRESH_TOKEN');
     }
 
     // 3. Issue a new token pair (rotation)
@@ -87,20 +85,19 @@ export class AuthService {
     );
     await this.helperService.storeHashedRefreshToken(String(user._id), tokens.refresh_token);
 
-    return {
-      success: true,
+    return ResponseHelper.success('Token refreshed successfully', {
       ...tokens,
       user: {
         id: user._id,
         name: user.name,
         email: user.email
       },
-    };
+    });
   }
 
   async logout(userId: string) {
     await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
-    return { success: true, message: 'Logged out successfully' };
+    return ResponseHelper.success('Logged out successfully', {});
   }
 }
 

@@ -2,15 +2,23 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product } from './models/product.model';
+import { MicroserviceException } from './common/exceptions/microservice.exception';
 
 @Injectable()
 export class ProductService {
   constructor(@InjectModel(Product.name) private readonly productModel: Model<Product>) { }
 
   async create(data: any) {
-    const product = await this.productModel.create(data);
+    const { userId, ...rest } = data;
 
-    return product;
+    const product = {
+      ...rest,
+      createdBy: userId,
+    }
+
+    const newProduct = await this.productModel.create(product);
+
+    return newProduct;
   }
 
   async findAll() {
@@ -21,39 +29,41 @@ export class ProductService {
     const product = await this.productModel.findById(id);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new MicroserviceException('Product not found');
     }
 
     return product;
   }
 
-  async update(id: string, userId: string, data: any) {
+  async update(data: any) {
+    const { id, userId, ...rest } = data;
     const product = await this.productModel.findById(id);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new MicroserviceException('Product not found');
     }
 
-    if (product.createdBy !== userId) {
-      throw new UnauthorizedException('Unauthorized: not product owner');
+    if (product.createdBy.toString() !== userId) {
+      throw new MicroserviceException('Unauthorized: not product owner');
     }
 
-    Object.assign(product, data);
+    Object.assign(product, rest);
 
     await product.save();
 
     return product;
   }
 
-  async delete(id: string, userId: string) {
+  async delete(data: any) {
+    const { id, userId } = data;
     const product = await this.productModel.findById(id);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new MicroserviceException('Product not found');
     }
 
-    if (product.createdBy !== userId) {
-      throw new UnauthorizedException('Unauthorized: not product owner');
+    if (product.createdBy.toString() !== userId) {
+      throw new MicroserviceException('Unauthorized: not product owner');
     }
 
     await product.deleteOne();

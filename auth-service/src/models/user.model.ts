@@ -14,7 +14,7 @@ export class User {
     @prop({ required: true, trim: true })
     email!: string;
 
-    @prop({ required: true, minlength: 6 })
+    @prop({ required: true })
     password!: string;
 
     @prop({ default: true })

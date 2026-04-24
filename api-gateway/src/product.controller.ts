@@ -16,10 +16,10 @@ export class ProductController {
     @Post()
     create(@Req() req: any, @Body() dto: any) {
         const data = {
+            userId: req.user.userId,
             ...dto,
-            createdBy: req.user.userId,
         }
-        console.log("👍 ~ data:", data)
+
         return this.productClient.send(PRODUCT_PATTERNS.CREATE, data);
     }
 
@@ -37,8 +37,8 @@ export class ProductController {
     update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
         const data = {
             id,
+            userId: req.user.userId,
             ...dto,
-            createdBy: req.user.userId,
         }
         return this.productClient.send(PRODUCT_PATTERNS.UPDATE, data);
     }
@@ -47,7 +47,7 @@ export class ProductController {
     delete(@Req() req: any, @Param('id') id: string) {
         const data = {
             id,
-            createdBy: req.user.userId,
+            userId: req.user.userId,
         }
         return this.productClient.send(PRODUCT_PATTERNS.DELETE, data);
     }

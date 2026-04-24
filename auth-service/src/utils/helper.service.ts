@@ -39,15 +39,14 @@ export class HelperService {
         await this.userModel.findByIdAndUpdate(userId, { refreshToken: hashed });
     }
 
-    verifyRefreshToken(token: string): boolean {
-        console.log("👍 ~ token:", token)
+    async verifyRefreshToken(token: string): Promise<any> {
         try {
-            this.jwtService.verify(token, {
+            const payload = await this.jwtService.verifyAsync(token, {
                 secret: this.configService.get<string>('JWT_REFRESH_SECRET', 'super_refresh_secret_key'),
             });
-            return true;
+            return payload;
         } catch {
-            return false;
+            return null;
         }
     }
 }

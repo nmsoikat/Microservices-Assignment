@@ -2,9 +2,9 @@ import {
     CanActivate,
     ExecutionContext,
     Injectable,
-    UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { MicroserviceException } from 'src/common/exceptions/microservice.exception';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -14,21 +14,28 @@ export class JwtAuthGuard implements CanActivate {
         const req = context.switchToHttp().getRequest();
 
         const authHeader = req.headers.authorization;
-        if (!authHeader) throw new UnauthorizedException('No token');
+        if (!authHeader) throw new MicroserviceException('No token', 'NO_TOKEN');
 
         const token = authHeader.split(' ')[1];
 
         try {
             const payload = await this.jwtService.verifyAsync(token, {
-                secret: process.env.JWT_SECRET,
+                secret: process.env.JWT_SECRET || 'super_secret_key',
             });
-            console.log("👍 ~ payload:", payload)
 
             req.user = payload;
 
             return true;
-        } catch {
-            throw new UnauthorizedException('Invalid token');
+        } catch (err) {
+            if (err instanceof TokenExpiredError) {
+                throw new MicroserviceException('Token expired', 'TOKEN_EXPIRED');
+            }
+
+            if (err instanceof JsonWebTokenError) {
+                throw new MicroserviceException('Invalid token', 'INVALID_TOKEN');
+            }
+
+            throw new MicroserviceException('Unauthorized', 'UNAUTHORIZED');
         }
     }
 }

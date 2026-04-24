@@ -24,11 +24,11 @@ export class ProductController {
 
   @MessagePattern(PRODUCT_PATTERNS.UPDATE)
   update(@Payload() data: any) {
-    return this.productService.update(data.id, data.userId, data);
+    return this.productService.update(data);
   }
 
   @MessagePattern(PRODUCT_PATTERNS.DELETE)
   delete(@Payload() data: any) {
-    return this.productService.delete(data.id, data.userId);
+    return this.productService.delete(data);
   }
 }
