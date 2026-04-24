@@ -4,12 +4,15 @@ import { Model } from 'mongoose';
 import { Product } from './models/product.model';
 import { MicroserviceException } from './common/exceptions/microservice.exception';
 import { ResponseHelper } from './common/responses/response.helper';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { DeleteProductDto } from './dto/delete-product.dto';
 
 @Injectable()
 export class ProductService {
   constructor(@InjectModel(Product.name) private readonly productModel: Model<Product>) { }
 
-  async create(data: any) {
+  async create(data: CreateProductDto) {
     const { userId, ...rest } = data;
 
     const product = {
@@ -37,7 +40,7 @@ export class ProductService {
     return ResponseHelper.success('Product found successfully', product);
   }
 
-  async update(data: any) {
+  async update(data: UpdateProductDto) {
     const { id, ...rest } = data;
     const product = await this.productModel.findById(id);
 
@@ -52,7 +55,7 @@ export class ProductService {
     return ResponseHelper.success('Product updated successfully', product);
   }
 
-  async delete(data: any) {
+  async delete(data: DeleteProductDto) {
     const { id } = data;
     const product = await this.productModel.findById(id);
 
