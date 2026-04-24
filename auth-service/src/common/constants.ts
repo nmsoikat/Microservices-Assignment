@@ -4,5 +4,7 @@ export const AUTH_QUEUE = 'auth_queue';
 
 export const AUTH_PATTERNS = {
     REGISTER: 'auth.register',
-    LOGIN: 'auth.login'
+    LOGIN: 'auth.login',
+    REFRESH_TOKEN: 'auth.refresh_token',
+    LOGOUT: 'auth.logout',
 };
