@@ -1,18 +1,26 @@
-import { Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Inject } from '@nestjs/common';
 import { Body } from '@nestjs/common';
 import { PRODUCT_PATTERNS, PRODUCT_SERVICE_RMQ } from './common/constants';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './guard/jwt.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('product')
 export class ProductController {
     constructor(
-        @Inject(PRODUCT_SERVICE_RMQ) private productClient: ClientProxy,
+        @Inject(PRODUCT_SERVICE_RMQ) private productClient: ClientProxy
     ) { }
 
     @Post()
-    create(@Body() dto: any) {
-        return this.productClient.emit(PRODUCT_PATTERNS.CREATE, dto);
+    create(@Req() req: any, @Body() dto: any) {
+        const data = {
+            ...dto,
+            createdBy: req.user.userId,
+        }
+        console.log("👍 ~ data:", data)
+        return this.productClient.send(PRODUCT_PATTERNS.CREATE, data);
     }
 
     @Get()
@@ -26,12 +34,21 @@ export class ProductController {
     }
 
     @Put(':id')
-    update(@Param('id') id: string, @Body() dto: any) {
-        return this.productClient.emit(PRODUCT_PATTERNS.UPDATE, { id, ...dto });
+    update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+        const data = {
+            id,
+            ...dto,
+            createdBy: req.user.userId,
+        }
+        return this.productClient.send(PRODUCT_PATTERNS.UPDATE, data);
     }
 
     @Delete(':id')
-    delete(@Param('id') id: string) {
-        return this.productClient.emit(PRODUCT_PATTERNS.DELETE, id);
+    delete(@Req() req: any, @Param('id') id: string) {
+        const data = {
+            id,
+            createdBy: req.user.userId,
+        }
+        return this.productClient.send(PRODUCT_PATTERNS.DELETE, data);
     }
 }

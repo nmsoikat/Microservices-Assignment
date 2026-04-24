@@ -6,7 +6,8 @@ export const PRODUCT_QUEUE = 'product_queue';
 
 export const AUTH_PATTERNS = {
     REGISTER: 'auth.register',
-    LOGIN: 'auth.login'
+    LOGIN: 'auth.login',
+    REFRESH_TOKEN: 'auth.refresh_token',
 };
 
 export const PRODUCT_PATTERNS = {

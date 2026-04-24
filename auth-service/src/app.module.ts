@@ -30,7 +30,6 @@ import { HelperService } from './utils/helper.service';
       }),
       inject: [ConfigService],
     }),
-
   ],
   controllers: [AuthController],
   providers: [AuthService, HelperService],

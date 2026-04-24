@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, EventPattern, Payload } from '@nestjs/microservices';
-import { PRODUCT_PATTERNS } from './common/constants';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductService } from './product.service';
+import { PRODUCT_PATTERNS } from './common/constants';
 
 @Controller()
 export class ProductController {
@@ -24,17 +24,11 @@ export class ProductController {
 
   @MessagePattern(PRODUCT_PATTERNS.UPDATE)
   update(@Payload() data: any) {
-    return this.productService.update(data);
+    return this.productService.update(data.id, data.userId, data);
   }
 
   @MessagePattern(PRODUCT_PATTERNS.DELETE)
-  delete(@Payload() id: string) {
-    return this.productService.delete(id);
-  }
-
-  // Optional: if you still want event-based support
-  @EventPattern('product.created.event')
-  handleCreatedEvent(@Payload() data: any) {
-    console.log('Event received:', data);
+  delete(@Payload() data: any) {
+    return this.productService.delete(data.id, data.userId);
   }
 }

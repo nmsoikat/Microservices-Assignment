@@ -1,46 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Product } from './models/product.model';
 
 @Injectable()
 export class ProductService {
-  private products: any[] = [];
+  constructor(@InjectModel(Product.name) private readonly productModel: Model<Product>) { }
 
-  create(data: any) {
-    const product = {
-      id: Date.now().toString(),
-      ...data,
-    };
+  async create(data: any) {
+    const product = await this.productModel.create(data);
 
-    this.products.push(product);
     return product;
   }
 
-  findAll() {
-    return this.products;
+  async findAll() {
+    return this.productModel.find();
   }
 
-  findOne(id: string) {
-    return this.products.find(p => p.id === id);
-  }
-
-  update(data: any) {
-    const product = this.products.find(p => p.id === data.id);
+  async findOne(id: string) {
+    const product = await this.productModel.findById(id);
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundException('Product not found');
+    }
+
+    return product;
+  }
+
+  async update(id: string, userId: string, data: any) {
+    const product = await this.productModel.findById(id);
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.createdBy !== userId) {
+      throw new UnauthorizedException('Unauthorized: not product owner');
     }
 
     Object.assign(product, data);
+
+    await product.save();
+
     return product;
   }
 
-  delete(id: string) {
-    const exists = this.products.find(p => p.id === id);
+  async delete(id: string, userId: string) {
+    const product = await this.productModel.findById(id);
 
-    if (!exists) {
-      throw new Error('Product not found');
+    if (!product) {
+      throw new NotFoundException('Product not found');
     }
 
-    this.products = this.products.filter(p => p.id !== id);
+    if (product.createdBy !== userId) {
+      throw new UnauthorizedException('Unauthorized: not product owner');
+    }
+
+    await product.deleteOne();
 
     return { deleted: true };
   }

@@ -16,7 +16,7 @@ export class HelperService {
 
     async generateTokens(userId: string, email: string, name: string) {
         const payload = {
-            sub: userId,
+            userId,
             email,
             name
         };
@@ -40,6 +40,7 @@ export class HelperService {
     }
 
     verifyRefreshToken(token: string): boolean {
+        console.log("👍 ~ token:", token)
         try {
             this.jwtService.verify(token, {
                 secret: this.configService.get<string>('JWT_REFRESH_SECRET', 'super_refresh_secret_key'),
